@@ -7,7 +7,15 @@ if (Meteor.isServer) {
     // code to run on server at startup
   });
 
-  // Meteor.publish('foobar', function() {
-  //   return SiteScans.find({ message: 'Foobar' });
-  // });
+  Meteor.publish('unscannedSites', function() {
+    return SiteScans.find({ status: { $lt: 2 } });
+  });
+
+  Meteor.publish('allSites', function() {
+    return SiteScans.find();
+  });
+
+  Meteor.publish('allPages', function() {
+    return PageScans.find();
+  });
 }

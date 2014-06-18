@@ -1,11 +1,20 @@
 var Crawler = require('simplecrawler');
 var cheerio = require('cheerio');
 var _ = require('underscore');
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
+var fs = require('fs');
 var logger = require('tracer').colorConsole({
-  format : "{{timestamp}} <{{title}}> {{message}}",
-  dateformat : "HH:MM:ss.l"
+  format : "{{timestamp}} <{{title}}> [Mapper] {{message}}",
+  dateformat : "HH:MM:ss.l",
+  level:'info'
+  // transport : function(data) {
+  //   console.log(data.output);
+  //   fs.open('./file.log', 'a', 0666, function(e, id) {
+  //     fs.write(id, data.output+"\n", null, 'utf8', function() {
+  //       fs.close(id, function() {
+  //       });
+  //     });
+  //   });
+  // }
 });
 
 var Mapper = function (postal) {
@@ -14,37 +23,17 @@ var Mapper = function (postal) {
 
   mapper.queue = [];
   mapper.crawlers = [];
+  // mapper.completedSites = [];
   mapper.CRAWL_LIMIT = 1;
+  mapper.interval = 5;
 
   mapper.postal.subscribe({
     channel: 'Sites',
     topic:   'added',
-    callback: function (data, envelope) {
-      logger.warn('Sites.added');
-    }
-  });
+    callback: mapper.addSite
+  }).withContext(mapper);
 
-  EventEmitter.call(mapper);
-};
-
-util.inherits(Mapper,EventEmitter);
-
-Mapper.prototype.init = function (uncrawledSites) {
-  var mapper = this;
-
-  mapper.uncrawledSites = uncrawledSites;
-
-  _.each(uncrawledSites, function (site, _id) {
-    // check for this needing to be crawled;
-    if (site.url === undefined || site.url === '') {
-      return;
-    }
-
-    mapper.push(_id, site.url, site.config);
-
-  }, mapper);
-
-  // mapper.start();
+  mapper.start();
 };
 
 Mapper.prototype.start = function () {
@@ -52,71 +41,89 @@ Mapper.prototype.start = function () {
 
   setInterval(function () {
     mapper.checkCrawlers();
-
-    if (mapper.uncrawledSites === undefined) {
-      logger.error('[Mapper] uncrawledSites data missing');
-      return;
-    }
-
-    if (mapper.crawlers >= mapper.CRAWL_LIMIT) {
-      logger.warn('[Mapper] At crawl limit');
-      return;
-    }
-
-    var sites = _.each(mapper.uncrawledSites, function (site, id) {
-      site._id = id;
-      return site;
-    });
-
-    sites = _.filter(sites, function (site) {
-      return site.status !== 2;
-    });
-
-    _.each(mapper.crawlers, function (crawler) {
-      sites = _.reject(sites, function (site) {
-        return site._id === crawler._id
-      })
-    }, mapper);
-
-    logger.info("[Mapper] Sites to crawl %s.", _.size(sites));
-
-    var nextSite = _.find(sites, function (site) {
-      return site.status !== 2;
-    });
-
-    if (nextSite === undefined) {
-      // logger.warn('[Mapper] no sites found to crawl');
-      return;
-    } else {
-      logger.info('[Mapper] started crawling %s', nextSite.url);
-      mapper.newCrawler(nextSite);
-    }
-
-  }, 1000 * 5); // Every 5 seconds
-
+    mapper.addCrawlers();
+  }, 1000 * mapper.interval);
 };
 
+// Adds a site in the queue.
+Mapper.prototype.addSite = function (data, envelope) {
+  var mapper = this;
+
+  // Should add extra check conditions here.
+  if (data.status === 0 && _.findWhere(mapper.queue, { _id: data._id }) === undefined) {
+    mapper.queue.push(data);
+    logger.info('%s pushed into crawling queue.', data.host);
+    // Queue gets sorted by the date it was added. Oldest is first.
+    var sorted = _.sortBy(mapper.queue, function (site) {
+      return site.created_at;
+    });
+  } else {
+    logger.log('Did not add %s', data.host);
+  }
+};
+
+// Checks to make sure a crawler can be fired up
+Mapper.prototype.addCrawlers = function () {
+  var mapper = this;
+
+  if (mapper.queue.length === 0) {
+    logger.log('No new sites to crawl');
+    return;
+  }
+
+  logger.log("Sites to crawl %s.", mapper.queue.length);
+
+  if (mapper.crawlers >= mapper.CRAWL_LIMIT) {
+    logger.warn('At crawl limit (%s)', mapper.CRAWL_LIMIT);
+    return;
+  }
+
+  var nextSite = mapper.queue.shift();
+
+  logger.info('started crawling %s', nextSite.host);
+  mapper.newCrawler(nextSite);
+};
+
+// Check in to send updates back to meteor
+Mapper.prototype.checkCrawlers = function () {
+  var mapper = this;
+
+  _.each(mapper.crawlers, function (crawler, index, list) {
+    logger.log("Crawler %s has %s items in the queue.", crawler.host, crawler.queue.countWithStatus('queued'));
+
+    crawler.site.pagesScanned = crawler.queue.complete();
+    crawler.site.pagesLeft    = crawler.queue.countWithStatus('queued');
+
+    if (crawler.site.status === 2) {
+      list.splice(index, 1);
+    }
+
+    mapper.postal.publish({
+        channel: 'Sites',
+        topic: 'updated',
+        data: crawler.site
+    });
+  });
+};
+
+// Heavy lifting happens here!
 Mapper.prototype.newCrawler = function (site) {
   var mapper = this;
   // logger.info(site);
   // Config conditions
+
   if (site._id === undefined) {
     throw new Error("Scan ID required");
   }
 
-  if (site.url === undefined) {
+  if (site.host === undefined) {
     throw new Error("target site undefined");
   }
 
   // Create the crawler
-  var crawler = new Crawler(site.url);
+  var crawler = new Crawler(site.host);
 
-  crawler._id                 = site._id;
-  crawler.url                 = site.url;
-  crawler.pagesScanned        = 0;
-  crawler.pagesLeft           = 0;
-  crawler.status              = 1;
-
+  crawler.site                = site; // Stash this for later
   crawler.stripQuerystring    = true;
   crawler.maxConcurrency      = 5;
   // crawler.interval            = 6000;
@@ -148,84 +155,40 @@ Mapper.prototype.newCrawler = function (site) {
       return !parsedURL.path.match(/\.mp4$/i);
   });
 
-  // Starts automatically
   crawler.on("fetchcomplete",function(queueItem, responseBuffer, response) {
-      var $content = cheerio.load(responseBuffer.toString());
-      var title = $content('title').html();
-      // logger.log('Crawled: %s ',queueItem.path);
+    var $content = cheerio.load(responseBuffer.toString());
+    var title = $content('title').html();
 
-      var data = {
+    mapper.postal.publish({
+      channel: 'Pages',
+      topic: 'crawled',
+      data: {
         queueItem: queueItem,
+        url: queueItem.url,
         page: responseBuffer.toString(),
-        title: title
-      };
-
-      mapper.emit("fetchcomplete", crawler._id, data);
+        title: title,
+        sitescan_id: crawler.site._id
+      }
+    });
   });
 
-  crawler.on("discoverycomplete", function() {
-    logger.warn('Discovery complete for %s', site.host);
+  crawler.site.status = 1;
+  mapper.postal.publish({
+    channel: 'Sites',
+    topic: 'started',
+    data: crawler.site
   });
+
+  mapper.crawlers.push(crawler);
+  crawler.start();
 
   crawler.on("complete", function() {
-    logger.log("[Mapper] queue complete");
-    mapper.emit("crawlFinished", site);
+    logger.info("Finished crawling %s", crawler.host);
+    crawler.site.status = 2; // She's done and we'll notify home next round of updates
   });
-
-  crawler.start();
-  mapper.crawlers.push(crawler);
-  mapper.emit("crawlStarted", crawler);
-};
-
-Mapper.prototype.checkCrawlers = function () {
-  var mapper = this;
-
-  _.each(mapper.crawlers, function (crawler, key, list) {
-    console.log(key);
-    var site = {
-      _id: crawler._id,
-      pagesLeft: crawler.queue.countWithStatus('queued'),
-      pagesScanned: crawler.queue.complete
-    }
-
-    mapper.emit("crawlerStatus", site);
-    logger.info("Crawler %s has %s items in the queue.", crawler.host, crawler.queue.countWithStatus('queued'));
-
-    if (crawler.status === 0) {
-      list.splice(key, 1);
-    }
-  });
-};
-
-// Item gets pushed into the queue, returns length;
-Mapper.prototype.push = function (_id, url, config) {
-  this.queue.push({ _id: _id, url: url, config: config });
-  return this.queue.length;
-};
-
-Mapper.prototype.next = function () {
-  return this.queue.shift();
 };
 
 module.exports = Mapper;
-
-// // Stop
-// Mapper.prototype.stop = function () {
-//   var mapper = this;
-//   mapper.crawler.stop();
-// };
-
-// // Freeze queue
-// Mapper.prototype.freeze = function () {
-//   var mapper = this;
-//   mapper.crawler.queue.freeze("mysavedqueue.json");
-// };
-
-// // Defrost queue
-// Mapper.prototype.defrost = function () {
-//   var mapper = this;
-//   mapper.crawler.queue.defrost("mysavedqueue.json");
-// };
 
 // Need to figure out a strategy for handling errors
 // crawler.on("queueerror", function(errorData, URLData) {

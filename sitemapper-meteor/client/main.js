@@ -4,6 +4,9 @@ if (Meteor.isClient) {
       // console.log(response.errors);
     });
   });
+
+  Meteor.subscribe("allSites");
+  Meteor.subscribe("allPages");
 }
 
 Template.newScanForm.events({
@@ -14,7 +17,7 @@ Template.newScanForm.events({
 
     // Check if a URL or better yet, delegate to a dedicated func
     if (newStatus !== '' || newStatus !== undefined) {
-      SiteScans.insert({ url: newStatus, created_at: now, pagesLeft: 0, pagesScanned: 0, status: 0 });
+      SiteScans.insert({ host: newStatus, created_at: now, pagesLeft: 0, pagesScanned: 0, status: 0 });
     }
   }
 });
@@ -24,16 +27,6 @@ Template.sitesScanning.helpers({
     return SiteScans.find({});
   }
 });
-
-// Template.scanShow.helpers({
-//   crawledURLs: function () {
-//     console.log('///////');
-//     console.log(Router._location.get());
-//     console.log('///////');
-//     // return PageScans.find({ sitescan_id: this.params._id });
-//     return 'foo';
-//   }
-// });
 
 add_scanShowController = RouteController.extend({
     template: 'scanShow',

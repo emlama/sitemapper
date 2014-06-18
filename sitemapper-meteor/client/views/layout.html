@@ -78,7 +78,7 @@
 
 <template name="siteTableItem">
   <tr>
-    <td><a href="{{pathFor 'scanShow'}}">{{url}}</a></td>
+    <td><a href="{{pathFor 'scanShow'}}">{{host}}</a></td>
     <td>{{status}}</td>
     <td>{{pagesLeft}}</td>
     <td>{{pagesScanned}}</td>
@@ -87,18 +87,15 @@
 
 <template name="pageTableItem">
   <tr>
+    <td>{{url}}</td>
     <td>{{title}}</td>
-    <td>{{crawl.path}}</td>
-    <td></td>
   </tr>
 </template>
 
 <template name="scanShow">
   <div class="row">
     <div class="large-12 columns">
-      {{url}}<br>
-      {{pagesLeft}}<br>
-      {{pagesScanned}}
+      <p>Site: {{site.host}} Pages left: {{site.pagesLeft}} Pages scanned: {{site.pagesScanned}}</p>
     </div>
   </div>
 
@@ -108,8 +105,7 @@
         <thead>
           <tr>
             <th>Site</th>
-            <th width="10%">Pages Left</th>
-            <th width="10%">Pages Scanned</th>
+            <th width="40%">Title</th>
           </tr>
         </thead>
         <tbody>
