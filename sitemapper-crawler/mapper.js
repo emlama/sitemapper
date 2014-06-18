@@ -6,15 +6,6 @@ var logger = require('tracer').colorConsole({
   format : "{{timestamp}} <{{title}}> [Mapper] {{message}}",
   dateformat : "HH:MM:ss.l",
   level:'info'
-  // transport : function(data) {
-  //   console.log(data.output);
-  //   fs.open('./file.log', 'a', 0666, function(e, id) {
-  //     fs.write(id, data.output+"\n", null, 'utf8', function() {
-  //       fs.close(id, function() {
-  //       });
-  //     });
-  //   });
-  // }
 });
 
 var Mapper = function (postal) {
@@ -189,37 +180,3 @@ Mapper.prototype.newCrawler = function (site) {
 };
 
 module.exports = Mapper;
-
-// Need to figure out a strategy for handling errors
-// crawler.on("queueerror", function(errorData, URLData) {
-//   // logger.error('Fetch queue error');
-//   // logger.trace(errorData);
-//   // logger.trace(URLData);
-//   logger.log('Error adding %s to the queue.', errorData);
-// });
-
-// crawler.on("fetchdataerror", function() {
-//   logger.error('Fetch data error');
-// });
-
-// crawler.on("fetchredirect", function() {
-//   logger.warn('Fetch redirect');
-// });
-
-// crawler.on("fetch404", function(queueItem, response) {
-//   logger.warn('404: %s', queueItem.path);
-// });
-
-// crawler.on("fetcherror", function(queueItem, response) {
-//   logger.error('Fetch error');
-//   // logger.trace(queueItem);
-//   // logger.trace(response);
-// });
-
-// crawler.on("fetchtimeout", function(queueItem, crawlerTimeoutValue) {
-//   logger.error('Fetch timeout: %s timeout value: %s', queueItem.path, crawlerTimeoutValue);
-// });
-
-// crawler.on("fetchclienterror", function(queueItem, errorData) {
-//   logger.error('Fetch client error: %s', queueItem.path);
-// });
