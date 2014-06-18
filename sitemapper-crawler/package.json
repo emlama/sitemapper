@@ -1,0 +1,21 @@
+{
+  "name": "sitemapper-crawler",
+  "version": "0.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^0.17.0",
+    "ddp": "^0.6.0",
+    "events": "^1.0.1",
+    "mongodb": "^1.4.6",
+    "postal": "^0.10.0",
+    "simplecrawler": "^0.3.8",
+    "underscore": "^1.6.0",
+    "util": "^0.10.3"
+  }
+}
