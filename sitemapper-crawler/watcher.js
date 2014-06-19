@@ -2,8 +2,7 @@ var DDPClient = require('ddp');
 var _ = require('underscore');
 var logger = require('tracer').colorConsole({
   format : "{{timestamp}} <{{title}}> [Watcher] {{message}}",
-  dateformat : "HH:MM:ss.l",
-  level:'info'
+  dateformat : "HH:MM:ss.l"
 });
 
 var Watcher = function (postal) {
@@ -11,8 +10,8 @@ var Watcher = function (postal) {
   watcher.postal = postal;
 
   watcher.queue = [];
-  watcher.pushLimit = 10;
-  watcher.publishPageInterval = 20;
+  watcher.pushLimit = 30;
+  watcher.publishPageInterval = 5;
   watcher.ddpclient = new DDPClient({
     host: "localhost",
     port: 3000,

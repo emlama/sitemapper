@@ -15,7 +15,7 @@ var Mapper = function (postal) {
   mapper.queue = [];
   mapper.crawlers = [];
   // mapper.completedSites = [];
-  mapper.CRAWL_LIMIT = 1;
+  mapper.CRAWL_LIMIT = 5;
   mapper.interval = 5;
 
   mapper.postal.subscribe({
