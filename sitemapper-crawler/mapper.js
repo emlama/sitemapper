@@ -120,6 +120,9 @@ Mapper.prototype.newCrawler = function (site) {
   // crawler.interval            = 6000;
   crawler.timeout             = 30000;
 
+  // SAVE TO DISK LIKE A BOSS
+  // crawler.cache = new Crawler.cache('foobar');
+
   // Exclude things that we don't want
   // In the future we will use the config for this
   var noJS = crawler.addFetchCondition(function(parsedURL) {
