@@ -1,2 +1,4 @@
 node_modules
 node-webkit-src
+sitemapper-crawler/cache
+sitemapper-meteor/public/cache
