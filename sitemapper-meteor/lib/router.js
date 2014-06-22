@@ -3,6 +3,7 @@ Router.map(function() {
     path: '/',
     layoutTemplate: 'layout'
   });
+
   this.route('scanShow', {
     path: '/crawls/:_id',
     layoutTemplate: 'layout',
@@ -13,4 +14,10 @@ Router.map(function() {
       };
     }
   });
+
+  this.route('styleguide', {
+    path: '/styleguide',
+    layoutTemplate: 'layout'
+  });
+
 });

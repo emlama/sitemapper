@@ -1,10 +1,4 @@
 if (Meteor.isClient) {
-  $(document).ready(function () {
-    $(document).foundation(function (response) {
-      // console.log(response.errors);
-    });
-  });
-
   Meteor.subscribe("allSites");
   Meteor.subscribe("allPages");
 }

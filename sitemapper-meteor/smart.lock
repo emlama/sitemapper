@@ -2,19 +2,27 @@
   "meteor": {},
   "dependencies": {
     "basePackages": {
-      "iron-router": {},
-      "kadira": {}
+      "foundation5-sass": {
+        "git": "https://github.com/matthewforr/meteor-foundation5-sass.git",
+        "branch": "master"
+      },
+      "iron-router": {}
     },
     "packages": {
+      "foundation5-sass": {
+        "git": "https://github.com/matthewforr/meteor-foundation5-sass.git",
+        "branch": "master",
+        "commit": "a58ccac087d6a876570a68d8f01a4d465aa4c376"
+      },
       "iron-router": {
         "git": "https://github.com/EventedMind/iron-router.git",
         "tag": "v0.7.1",
         "commit": "d1ffb3f06ea4c112132b030f2eb1a70b81675ecb"
       },
-      "kadira": {
-        "git": "https://github.com/meteorhacks/kadira.git",
-        "tag": "v2.4.3",
-        "commit": "6b8fd8cf89304fecef2c4a2fd3b390ab9c314a10"
+      "scss": {
+        "git": "https://github.com/fourseven/meteor-scss.git",
+        "tag": "v0.9.3",
+        "commit": "185f3b2787fb85e653f7b7bf603d1493ed14943d"
       },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",

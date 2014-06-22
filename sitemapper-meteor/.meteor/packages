@@ -7,5 +7,6 @@ standard-app-packages
 insecure
 accounts-password
 accounts-ui-unstyled
-iron-router
 kadira
+iron-router
+foundation5-sass

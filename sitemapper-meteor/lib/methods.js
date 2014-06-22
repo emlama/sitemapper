@@ -21,7 +21,7 @@ Meteor.methods({
     SiteScans.update({ _id: site._id }, { $set: data }, function (err, result) {
       if (err) {
         console.log(err);
-        return;  
+        return;
       }
     });
     // SiteScans.update({ _id: site._id }, { $set: { status: site.status, pagesLeft: site.pagesLeft, pagesScanned: site.pagesScanned } });
