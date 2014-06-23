@@ -3,3 +3,4 @@ node-webkit-src
 sitemapper-crawler/cache
 sitemapper-meteor/public/cache
 sitemapper-meteor/server/kadira.js
+sitemapper-crawler/cached_sites

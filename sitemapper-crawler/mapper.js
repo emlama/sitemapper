@@ -16,7 +16,7 @@ var Mapper = function (postal) {
   mapper.crawlers = [];
   // mapper.completedSites = [];
   mapper.CRAWL_LIMIT = 5;
-  mapper.interval = 5;
+  mapper.interval = 30;
 
   mapper.postal.subscribe({
     channel: 'Sites',
@@ -121,37 +121,43 @@ Mapper.prototype.newCrawler = function (site) {
   crawler.timeout             = 30000;
 
   // SAVE TO DISK LIKE A BOSS
-  // crawler.cache = new Crawler.cache('foobar');
+  // TODO - Make this async so it doesn't block existing crawls
+  fs.mkdirSync('cached_sites/' + site._id);
+  crawler.cache = new Crawler.cache('cached_sites/' + site._id);
 
   // Exclude things that we don't want
   // In the future we will use the config for this
-  var noJS = crawler.addFetchCondition(function(parsedURL) {
-      return !parsedURL.path.match(/\.js$/i);
-  });
+  // var noJS = crawler.addFetchCondition(function(parsedURL) {
+  //     return !parsedURL.path.match(/\.js$/i);
+  // });
 
-  var noCSS = crawler.addFetchCondition(function(parsedURL) {
-      return !parsedURL.path.match(/\.css$/i);
-  });
+  // var noCSS = crawler.addFetchCondition(function(parsedURL) {
+  //     return !parsedURL.path.match(/\.css$/i);
+  // });
 
-  var noPNG = crawler.addFetchCondition(function(parsedURL) {
-      return !parsedURL.path.match(/\.png$/i);
-  });
+  // var noPNG = crawler.addFetchCondition(function(parsedURL) {
+  //     return !parsedURL.path.match(/\.png$/i);
+  // });
 
-  var noJPG = crawler.addFetchCondition(function(parsedURL) {
-      return !parsedURL.path.match(/\.jpg$/i);
-  });
+  // var noJPG = crawler.addFetchCondition(function(parsedURL) {
+  //     return !parsedURL.path.match(/\.jpg$/i);
+  // });
 
-  var noKML = crawler.addFetchCondition(function(parsedURL) {
-      return !parsedURL.path.match(/\.kml$/i);
-  });
+  // var noKML = crawler.addFetchCondition(function(parsedURL) {
+  //     return !parsedURL.path.match(/\.kml$/i);
+  // });
 
-  var noMovie = crawler.addFetchCondition(function(parsedURL) {
-      return !parsedURL.path.match(/\.mp4$/i);
-  });
+  // var noMovie = crawler.addFetchCondition(function(parsedURL) {
+  //     return !parsedURL.path.match(/\.mp4$/i);
+  // });
 
   crawler.on("fetchcomplete",function(queueItem, responseBuffer, response) {
-    var $content = cheerio.load(responseBuffer.toString());
-    var title = $content('title').html();
+    var title = "";
+
+    if (queueItem.stateData.contentType === "text/html; charset=utf-8") {
+      var $content = cheerio.load(responseBuffer.toString());
+      title = $content('title').html();
+    }
 
     mapper.postal.publish({
       channel: 'Pages',
@@ -159,9 +165,11 @@ Mapper.prototype.newCrawler = function (site) {
       data: {
         queueItem: queueItem,
         url: queueItem.url,
-        page: responseBuffer.toString(),
         title: title,
-        sitescan_id: crawler.site._id
+        sitescan_id: crawler.site._id,
+        type: queueItem.stateData.contentType,
+        code: queueItem.stateData.code,
+        size: queueItem.stateData.actualDataSize
       }
     });
   });
