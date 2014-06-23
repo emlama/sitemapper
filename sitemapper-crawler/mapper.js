@@ -3,6 +3,7 @@ var cheerio = require('cheerio');
 var _ = require('underscore');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
+var SitemapperCache = require('./cache-sitemapper.js');
 var logger = require('tracer').colorConsole({
   format : "{{timestamp}} <{{title}}> [Mapper] {{message}}",
   dateformat : "HH:MM:ss.l",
@@ -17,7 +18,7 @@ var Mapper = function (postal) {
   mapper.crawlers = [];
   // mapper.completedSites = [];
   mapper.CRAWL_LIMIT = 5;
-  mapper.interval = 30;
+  mapper.interval = 5;
 
   mapper.postal.subscribe({
     channel: 'Sites',
