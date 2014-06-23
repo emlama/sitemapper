@@ -36,3 +36,8 @@ To get up and running follow these instructions:
 - Add in users and authentication
 - Add in homepage
 - Create a ENV variables/switches for localhost/dev/production instances
+
+## Dashboard
+
+- Implement thumbnails
+- So create button if nothing crawled

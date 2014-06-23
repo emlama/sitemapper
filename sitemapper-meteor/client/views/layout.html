@@ -6,56 +6,7 @@
 </template>
 
 <template name="home">
-  <div class="row">
-    <div class="large-12 columns">
-      <h1>Welcome to Sitemapper</h1>
-      {{> newScanForm}}
-    </div>
-  </div>
-
-  {{> sitesScanning}}
-</template>
-
-<template name="nav">
-  <nav class="top-bar" data-topbar>
-    <ul class="title-area">
-      <li class="name">
-        <h1><a href="/">Sitemapper</a></h1>
-      </li>
-       <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
-      <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
-    </ul>
-
-    <section class="top-bar-section">
-      <!-- Right Nav Section -->
-      <ul class="right">
-        <li>
-          {{> loginButtons}}
-        </li>
-      </ul>
-
-      <!-- Left Nav Section
-      <ul class="left">
-        <li><a href="#">Left Nav Button</a></li>
-      </ul>-->
-    </section>
-  </nav>
-</template>
-
-<template name="newScanForm">
-  <form>
-    <div class="row collapse">
-      <div class="small-10 columns">
-        <input type="text" placeholder="www.goang.com">
-      </div>
-      <div class="small-2 columns">
-        <a class="button postfix">Scan</a>
-      </div>
-    </div>
-  </form>
-</template>
-
-<template name="sitesScanning">
+  <p></p>
   <div class="row">
     <div class="large-12 columns">
       <table width="100%">
@@ -81,8 +32,8 @@
   <tr>
     <td><a href="{{pathFor 'scanShow'}}">{{host}}</a></td>
     <td>{{status}}</td>
-    <td>{{pagesLeft}}</td>
-    <td>{{pagesScanned}}</td>
+    <td class="number">{{pagesLeft}}</td>
+    <td class="number">{{pagesScanned}}</td>
   </tr>
 </template>
 
@@ -90,6 +41,11 @@
   <tr>
     <td>{{url}}</td>
     <td>{{title}}</td>
+    <td>none</td>
+    <td>none</td>
+    <td>{{queueItem.stateData.contentType}}</td>
+    <td>{{queueItem.stateData.code}}</td>
+    <td class="number">{{queueItem.stateData.actualDataSize}}</td>
   </tr>
 </template>
 
@@ -100,23 +56,24 @@
     </div>
   </div>
 
-  <div class="row">
-    <div class="large-12 columns">
-      <table width="100%">
-        <thead>
-          <tr>
-            <th>Site</th>
-            <th width="40%">Title</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each crawledURLs}}
-            {{> pageTableItem}}
-          {{/each}}
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <table width="100%">
+    <thead>
+      <tr>
+        <th width="40%">Site</th>
+        <th>Title</th>
+        <th>Template</th>
+        <th>Data Model</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Size</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each crawledURLs}}
+        {{> pageTableItem}}
+      {{/each}}
+    </tbody>
+  </table>
 </template>
 
 <template name="styleguide">

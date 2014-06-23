@@ -3,7 +3,7 @@ if (Meteor.isClient) {
   Meteor.subscribe("allPages");
 }
 
-Template.newScanForm.events({
+Template.create.events({
   'click .button': function(e, tmp) {
     e.preventDefault();
     var newStatus = tmp.find('input').value;
@@ -16,7 +16,7 @@ Template.newScanForm.events({
   }
 });
 
-Template.sitesScanning.helpers({
+Template.home.helpers({
   siteList: function() {
     return SiteScans.find({});
   }

@@ -1,3 +1,11 @@
 @import "_settings.scss";
 @import "packages/foundation5-sass/foundation";
 // @import "_settings.scss";
+
+input {
+  font-weight: normal;
+}
+
+td.number {
+  text-align: right;
+}

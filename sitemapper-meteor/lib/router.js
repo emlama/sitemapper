@@ -20,4 +20,9 @@ Router.map(function() {
     layoutTemplate: 'layout'
   });
 
+  this.route('create', {
+    path: '/create',
+    layoutTemplate: 'layout'
+  });
+
 });
