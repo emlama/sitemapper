@@ -2,6 +2,7 @@ var Crawler = require('simplecrawler');
 var cheerio = require('cheerio');
 var _ = require('underscore');
 var fs = require('fs');
+var mkdirp = require('mkdirp');
 var logger = require('tracer').colorConsole({
   format : "{{timestamp}} <{{title}}> [Mapper] {{message}}",
   dateformat : "HH:MM:ss.l",
@@ -122,8 +123,8 @@ Mapper.prototype.newCrawler = function (site) {
 
   // SAVE TO DISK LIKE A BOSS
   // TODO - Make this async so it doesn't block existing crawls
-  fs.mkdirSync('cached_sites/' + site._id);
-  crawler.cache = new Crawler.cache('cached_sites/' + site._id);
+  mkdirp.sync('cached_sites/' + site._id);
+  crawler.cache = new SitemapperCache('cached_sites/' + site._id);
 
   // Exclude things that we don't want
   // In the future we will use the config for this
