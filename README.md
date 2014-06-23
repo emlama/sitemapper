@@ -41,3 +41,9 @@ To get up and running follow these instructions:
 
 - Implement thumbnails
 - So create button if nothing crawled
+
+# various notes
+
+Export from the database
+
+`mongoexport --host localhost:3001 --db meteor --collection pagescans --fields type,url,title,size --csv --query '{"sitescan_id":"ZCTu9C9zCpcEqB4tD"}' --out ~/src/sitemapper/goang-pages-full.csv`
