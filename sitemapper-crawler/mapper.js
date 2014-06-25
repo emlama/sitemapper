@@ -2,11 +2,15 @@ var Crawler = require('simplecrawler');
 var cheerio = require('cheerio');
 var _ = require('underscore');
 var fs = require('fs');
+var mkdirp = require('mkdirp');
+var SitemapperCache = require('./cache-sitemapper.js');
 var logger = require('tracer').colorConsole({
   format : "{{timestamp}} <{{title}}> [Mapper] {{message}}",
   dateformat : "HH:MM:ss.l",
   level:'info'
 });
+
+"use strict";
 
 var Mapper = function (postal) {
   var mapper = this;
@@ -16,7 +20,7 @@ var Mapper = function (postal) {
   mapper.crawlers = [];
   // mapper.completedSites = [];
   mapper.CRAWL_LIMIT = 5;
-  mapper.interval = 30;
+  mapper.interval = 5;
 
   mapper.postal.subscribe({
     channel: 'Sites',
@@ -41,10 +45,11 @@ Mapper.prototype.addSite = function (data, envelope) {
   var mapper = this;
 
   // Should add extra check conditions here.
-  if (data.status === 0 && _.findWhere(mapper.queue, { _id: data._id }) === undefined) {
+  if (data.status !== 2 && _.findWhere(mapper.queue, { _id: data._id }) === undefined) {
     mapper.queue.push(data);
     logger.info('%s pushed into crawling queue.', data.host);
     // Queue gets sorted by the date it was added. Oldest is first.
+    // It probably will be like sorted already but can't promise that
     var sorted = _.sortBy(mapper.queue, function (site) {
       return site.created_at;
     });
@@ -72,10 +77,17 @@ Mapper.prototype.addCrawlers = function () {
   var nextSite = mapper.queue.shift();
 
   logger.info('started crawling %s', nextSite.host);
-  mapper.newCrawler(nextSite);
+  mapper.crawlers.push(mapper.newCrawler(nextSite));
 };
 
-// Check in to send updates back to meteor
+/**
+ * Checks in and sends stats back to meteor
+ * TODO removing crawlers once they are complete
+ * from here doesn't make sense. This could be put somewhere
+ * else so that we don't have to wait every interval to do
+ * the work.
+ * @return {[type]} [description]
+ */
 Mapper.prototype.checkCrawlers = function () {
   var mapper = this;
 
@@ -86,6 +98,12 @@ Mapper.prototype.checkCrawlers = function () {
     crawler.site.pagesLeft    = crawler.queue.countWithStatus('queued');
 
     if (crawler.site.status === 2) {
+      mapper.postal.publish({
+          channel: 'Sites',
+          topic: 'completed',
+          data: crawler.site
+      });
+
       list.splice(index, 1);
     }
 
@@ -98,10 +116,9 @@ Mapper.prototype.checkCrawlers = function () {
 };
 
 // Heavy lifting happens here!
-Mapper.prototype.newCrawler = function (site) {
+Mapper.prototype.newCrawler = function (_site) {
   var mapper = this;
-  // logger.info(site);
-  // Config conditions
+  var site = _site;
 
   if (site._id === undefined) {
     throw new Error("Scan ID required");
@@ -122,8 +139,9 @@ Mapper.prototype.newCrawler = function (site) {
 
   // SAVE TO DISK LIKE A BOSS
   // TODO - Make this async so it doesn't block existing crawls
-  fs.mkdirSync('cached_sites/' + site._id);
-  crawler.cache = new Crawler.cache('cached_sites/' + site._id);
+  crawler.site.storagePath = 'cached_sites/' + site._id;
+  mkdirp.sync(site.storagePath);
+  crawler.cache = new SitemapperCache(site.storagePath);
 
   // Exclude things that we don't want
   // In the future we will use the config for this
@@ -151,12 +169,27 @@ Mapper.prototype.newCrawler = function (site) {
   //     return !parsedURL.path.match(/\.mp4$/i);
   // });
 
-  crawler.on("fetchcomplete",function(queueItem, responseBuffer, response) {
+  // Could put the path in at this point, but wait until everything is done
+
+  crawler.cache.on("setcache", function (queueItem,data,cacheObject) {
+    mapper.postal.publish({
+      channel: 'Pages',
+      topic: 'crawled',
+      data: {
+        url: queueItem.url,
+        sitescan_id: crawler.site._id,
+        cacheObject: cacheObject
+      }
+    });
+  });
+
+  crawler.on("fetchcomplete", function (queueItem, responseBuffer, response) {
     var title = "";
 
-    if (queueItem.stateData.contentType === "text/html; charset=utf-8") {
+    if (queueItem.stateData.contentType == "text/html") {
       var $content = cheerio.load(responseBuffer.toString());
       title = $content('title').html();
+      logger.log('Title is %s', title);
     }
 
     mapper.postal.publish({
@@ -174,20 +207,23 @@ Mapper.prototype.newCrawler = function (site) {
     });
   });
 
-  crawler.site.status = 1;
+  crawler.site.status = 1; // Indicate this guy is started
+
   mapper.postal.publish({
     channel: 'Sites',
     topic: 'started',
     data: crawler.site
   });
 
-  mapper.crawlers.push(crawler);
   crawler.start();
 
   crawler.on("complete", function() {
     logger.info("Finished crawling %s", crawler.host);
+    // crawler.site.fileIndex = crawler.cache.datastore.index;
     crawler.site.status = 2; // She's done and we'll notify home next round of updates
   });
+
+  return crawler;
 };
 
 module.exports = Mapper;

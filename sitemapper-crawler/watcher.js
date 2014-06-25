@@ -113,8 +113,37 @@ Watcher.prototype.publishPage = function (page) {
 };
 
 // Queues a page to be published
+// Lets maintain a sorted array of objects so I can merge things in
+// as needed
 Watcher.prototype.push = function (data) {
-  this.queue.push(data);
+  // Nothing to do
+  if (this.queue.length === 0) {
+    this.queue.push(data);
+    return this.queue.length;
+  }
+
+  // Let's see if we can find another item in the queue
+  var itemInQueue = _.find(this.queue, function (element) {
+    if (element.url === data.url && element.sitescan_id === data.sitescan_id) {
+      return true;
+    } else {
+      return false;
+    }
+  }, this);
+
+  // Insert into the queue because there's nothing in there
+  if (itemInQueue === undefined) {
+    this.queue.push(data);
+    return this.queue.length;
+  }
+
+  // Go through and merge it in
+  _.each(this.queue, function (element, index, list) {
+    if (element.url === data.url && element.sitescan_id === data.sitescan_id) {
+      list[index] = _.extend(data, element);
+    }
+  }, this);
+
   return this.queue.length;
 };
 
