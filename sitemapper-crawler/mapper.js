@@ -10,6 +10,8 @@ var logger = require('tracer').colorConsole({
   level:'info'
 });
 
+"use strict";
+
 var Mapper = function (postal) {
   var mapper = this;
   mapper.postal = postal;
@@ -47,6 +49,7 @@ Mapper.prototype.addSite = function (data, envelope) {
     mapper.queue.push(data);
     logger.info('%s pushed into crawling queue.', data.host);
     // Queue gets sorted by the date it was added. Oldest is first.
+    // It probably will be like sorted already but can't promise that
     var sorted = _.sortBy(mapper.queue, function (site) {
       return site.created_at;
     });
@@ -74,10 +77,17 @@ Mapper.prototype.addCrawlers = function () {
   var nextSite = mapper.queue.shift();
 
   logger.info('started crawling %s', nextSite.host);
-  mapper.newCrawler(nextSite);
+  mapper.crawlers.push(mapper.newCrawler(nextSite));
 };
 
-// Check in to send updates back to meteor
+/**
+ * Checks in and sends stats back to meteor
+ * TODO removing crawlers once they are complete
+ * from here doesn't make sense. This could be put somewhere
+ * else so that we don't have to wait every interval to do
+ * the work.
+ * @return {[type]} [description]
+ */
 Mapper.prototype.checkCrawlers = function () {
   var mapper = this;
 
@@ -88,6 +98,12 @@ Mapper.prototype.checkCrawlers = function () {
     crawler.site.pagesLeft    = crawler.queue.countWithStatus('queued');
 
     if (crawler.site.status === 2) {
+      mapper.postal.publish({
+          channel: 'Sites',
+          topic: 'completed',
+          data: crawler.site
+      });
+
       list.splice(index, 1);
     }
 
@@ -100,8 +116,9 @@ Mapper.prototype.checkCrawlers = function () {
 };
 
 // Heavy lifting happens here!
-Mapper.prototype.newCrawler = function (site) {
+Mapper.prototype.newCrawler = function (_site) {
   var mapper = this;
+  var site = _site;
 
   if (site._id === undefined) {
     throw new Error("Scan ID required");
@@ -122,9 +139,9 @@ Mapper.prototype.newCrawler = function (site) {
 
   // SAVE TO DISK LIKE A BOSS
   // TODO - Make this async so it doesn't block existing crawls
-  var path = 'cached_sites/' + site._id;
-  mkdirp.sync(path);
-  crawler.cache = new SitemapperCache(path);
+  crawler.site.storagePath = 'cached_sites/' + site._id;
+  mkdirp.sync(site.storagePath);
+  crawler.cache = new SitemapperCache(site.storagePath);
 
   // Exclude things that we don't want
   // In the future we will use the config for this
@@ -198,7 +215,6 @@ Mapper.prototype.newCrawler = function (site) {
     data: crawler.site
   });
 
-  mapper.crawlers.push(crawler);
   crawler.start();
 
   crawler.on("complete", function() {
@@ -206,6 +222,8 @@ Mapper.prototype.newCrawler = function (site) {
     // crawler.site.fileIndex = crawler.cache.datastore.index;
     crawler.site.status = 2; // She's done and we'll notify home next round of updates
   });
+
+  return crawler;
 };
 
 module.exports = Mapper;

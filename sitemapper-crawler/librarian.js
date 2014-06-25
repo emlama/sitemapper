@@ -10,11 +10,82 @@ Two strategies
 
 **/
 
+var fs = require('fs');
+var cheerio = require('cheerio');
+var _ = require('underscore');
+var logger = require('tracer').colorConsole({
+  format : "{{timestamp}} <{{title}}> [Mapper] {{message}}",
+  dateformat : "HH:MM:ss.l",
+  level:'info'
+});
+
+var Librarian = function (postal) {
+  var librarian = this;
+
+  librarian.queue = [];
+  librarian.interval = 5;
+  librarian.INTERN_LIMIT = 1;
+
+  librarian.postal = postal;
+
+  librarian.postal.subscribe({
+    channel: 'Sites',
+    topic:   'completed',
+    callback: librarian.addDirectory
+  });
+
+  // librarian.start();
+};
+
+// Use this to throttle the amount of work being done
+Librarian.prototype.start = function () {
+  setInterval(function () {
+    this.checkInterns();
+    this.addInternWorker();
+  }, 1000 * this.interval);
+};
+
+Librarian.prototype.addDirectory = function (site) {
+  var librarian = this;
+
+  if (_.findWhere(librarian.queue, { _id: site._id }) === undefined) {
+    librarian.queue.push(site);
+    logger.info('%s pushed into crawling queue.', site.host);
+  } else {
+    logger.log('Did not add %s', site.host);
+  }
+};
+
+Librarian.prototype.addInternWorker = function () {
+ var librarian = this;
+
+  if (librarian.queue.length === 0) {
+    logger.log('No new directories to organize');
+    return;
+  }
+
+  logger.log("Directories to organize %s.", librarian.queue.length);
+
+  if (librarian.interns >= librarian.INTERN_LIMIT) {
+    logger.warn('At intern limit (%s)', librarian.INTERN_LIMIT);
+    return;
+  }
+
+  var nextIntern = librarian.queue.shift();
+
+  logger.info('started crawling %s', nextIntern.host);
+  librarian.newIntern(nextIntern);
+};
+
+Librarian.prototype.newIntern = function (site) {
+  logger.info('Site: %s was completed and is now being sorted', site._id);
+};
 
 // Make magic happen here
-Cache.prototype.rewriteURLs = function (queueObject,data) {
+Librarian.prototype.rewriteURLs = function (queueObject,data) {
   var resourceText = data.toString("utf8");
   queueObject.cacheLoadParameter = this.cacheLoadParameter;
+
   var res = resourceText.replace(/(\shref\s?=\s?|\ssrc\s?=\s?|url\()['"]([^"']+)/ig, function (match, a, b, c, offset, string) {
     if (match.match(/http(s)?\:\/\/[^?\s><\'\"]+/ig)) return match; // Full URL
     if (match.match('//')) return match; // Same as Full URL
@@ -26,32 +97,25 @@ Cache.prototype.rewriteURLs = function (queueObject,data) {
     // B should be what we want to rewrite
     // C could be anything
 
-    // var mung = b;
-
-    // // If the match started with a slash chop it off
-    // if (mung.charAt(0) == '/') {
-    //   mung = mung.slice(1);
-    // }
-
     // This is the same format that cache-backend-fs uses to build it's directory structure
     var pathStack = [queueObject.cacheLoadParameter, queueObject.protocol, queueObject.domain, queueObject.port, b];
     // pathStack = _.compact(pathStack.concat(sanitisePath(b,queueObject).split(/\/+/g)));
 
-    console.log(pathStack); // Should be the paths all split apart.
     pathStack = pathStack.join('/');
-
-    console.log(pathStack);
 
     // We go back to the matched string and replace the path
     var outcome = match.replace(b, '/' + pathStack);
 
-    console.log(outcome);
-    console.log('');
     return outcome;
   });
 
   return res;
 };
+
+function mattyBeThinking (args) {
+  // Need a collection of urls found on the site and their sanitized paths
+  // db.pagescans.find({ type: "text/html" }, { "cache_object.dataFile": 1, "queueItem.path": 1 } ).limit(10)
+}
 
 function sanitisePath(path,queueObject) {
   // Remove first slash (as we set one later.)
