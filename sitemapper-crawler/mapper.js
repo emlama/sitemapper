@@ -43,7 +43,7 @@ Mapper.prototype.addSite = function (data, envelope) {
   var mapper = this;
 
   // Should add extra check conditions here.
-  if (data.status === 0 && _.findWhere(mapper.queue, { _id: data._id }) === undefined) {
+  if (data.status !== 2 && _.findWhere(mapper.queue, { _id: data._id }) === undefined) {
     mapper.queue.push(data);
     logger.info('%s pushed into crawling queue.', data.host);
     // Queue gets sorted by the date it was added. Oldest is first.
@@ -102,8 +102,6 @@ Mapper.prototype.checkCrawlers = function () {
 // Heavy lifting happens here!
 Mapper.prototype.newCrawler = function (site) {
   var mapper = this;
-  // logger.info(site);
-  // Config conditions
 
   if (site._id === undefined) {
     throw new Error("Scan ID required");
@@ -124,8 +122,9 @@ Mapper.prototype.newCrawler = function (site) {
 
   // SAVE TO DISK LIKE A BOSS
   // TODO - Make this async so it doesn't block existing crawls
-  mkdirp.sync('cached_sites/' + site._id);
-  crawler.cache = new SitemapperCache('cached_sites/' + site._id);
+  var path = 'cached_sites/' + site._id;
+  mkdirp.sync(path);
+  crawler.cache = new SitemapperCache(path);
 
   // Exclude things that we don't want
   // In the future we will use the config for this
@@ -153,12 +152,27 @@ Mapper.prototype.newCrawler = function (site) {
   //     return !parsedURL.path.match(/\.mp4$/i);
   // });
 
-  crawler.on("fetchcomplete",function(queueItem, responseBuffer, response) {
+  // Could put the path in at this point, but wait until everything is done
+
+  crawler.cache.on("setcache", function (queueItem,data,cacheObject) {
+    mapper.postal.publish({
+      channel: 'Pages',
+      topic: 'crawled',
+      data: {
+        url: queueItem.url,
+        sitescan_id: crawler.site._id,
+        cacheObject: cacheObject
+      }
+    });
+  });
+
+  crawler.on("fetchcomplete", function (queueItem, responseBuffer, response) {
     var title = "";
 
-    if (queueItem.stateData.contentType === "text/html; charset=utf-8") {
+    if (queueItem.stateData.contentType == "text/html") {
       var $content = cheerio.load(responseBuffer.toString());
       title = $content('title').html();
+      logger.log('Title is %s', title);
     }
 
     mapper.postal.publish({
@@ -176,7 +190,8 @@ Mapper.prototype.newCrawler = function (site) {
     });
   });
 
-  crawler.site.status = 1;
+  crawler.site.status = 1; // Indicate this guy is started
+
   mapper.postal.publish({
     channel: 'Sites',
     topic: 'started',
@@ -188,6 +203,7 @@ Mapper.prototype.newCrawler = function (site) {
 
   crawler.on("complete", function() {
     logger.info("Finished crawling %s", crawler.host);
+    // crawler.site.fileIndex = crawler.cache.datastore.index;
     crawler.site.status = 2; // She's done and we'll notify home next round of updates
   });
 };
