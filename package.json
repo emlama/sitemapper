@@ -1,0 +1,20 @@
+{
+  "name": "sitemapper",
+  "version": "0.0.0",
+  "description": "This is a fun side project that aims to make doing information architecture work easier. Currently it will crawl a site and cache all of its resources to disk.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./sitemapper-crawler/app.js",
+    "restart": "node restart.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/matthewforr/sitemapper.git"
+  },
+  "author": "Matthew Forr",
+  "license": "Copyright of Matthew Forr",
+  "bugs": {
+    "url": "https://github.com/matthewforr/sitemapper/issues"
+  },
+  "homepage": "https://github.com/matthewforr/sitemapper"
+}

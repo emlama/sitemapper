@@ -47,3 +47,29 @@ To get up and running follow these instructions:
 Export from the database
 
 `mongoexport --host localhost:3001 --db meteor --collection pagescans --fields type,url,title,size --csv --query '{"sitescan_id":"ZCTu9C9zCpcEqB4tD"}' --out ~/src/sitemapper/goang-pages-full.csv`
+
+# watcher.js ideas
+This file watches the `sitescans` collection in Meteor.
+
+`sitescans`
+- owner
+- status
+-- complete
+-- in progress
+- created_at
+- url
+- config
+-- filters
+-- strip query strings
+-- TBD
+
+`pagecrawls`
+- url
+- owner
+- sitescan_id
+- meta_title
+- meta_description
+- content
+- created_at
+- content
+- consider pulling embed.ly content
