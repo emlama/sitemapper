@@ -1,0 +1,38 @@
+<template name="scanShow">
+  <div class="row">
+    <div class="large-12 columns">
+      <p>Site: {{site.host}} Pages left: {{site.pagesLeft}} Pages scanned: {{site.pagesScanned}}</p>
+    </div>
+  </div>
+
+  <table width="100%">
+    <thead>
+      <tr>
+        <th width="40%">URL</th>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Cache Link</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Size</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each crawledURLs}}
+        {{> pageTableItem}}
+      {{/each}}
+    </tbody>
+  </table>
+</template>
+
+<template name="pageTableItem">
+  <tr>
+    <td>{{url}}</td>
+    <td>{{title}}</td>
+    <td>{{status}}</td>
+    <td><a href="http://cached.sitemapper.local/{{cacheObject.dataFile}}">Link</a></td>
+    <td>{{queueItem.stateData.contentType}}</td>
+    <td>{{queueItem.stateData.code}}</td>
+    <td class="number">{{queueItem.stateData.actualDataSize}}</td>
+  </tr>
+</template>

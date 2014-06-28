@@ -1,0 +1,33 @@
+<template name="home">
+  <p></p>
+  <div class="row">
+    <div class="large-12 columns">
+      <table width="100%">
+        <thead>
+          <tr>
+            <th>Site</th>
+            <th width="10%">ID</th>
+            <th width="10%">Status</th>
+            <th width="10%">Pages Left</th>
+            <th width="10%">Pages Scanned</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each siteList}}
+            {{> siteTableItem}}
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<template name="siteTableItem">
+  <tr>
+    <td><a href="{{pathFor 'scanShow'}}">{{host}}</a></td>
+    <td>{{_id}}</td>
+    <td>{{status}}</td>
+    <td class="number">{{pagesLeft}}</td>
+    <td class="number">{{pagesScanned}}</td>
+  </tr>
+</template>
