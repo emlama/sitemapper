@@ -13,6 +13,10 @@ To get up and running follow these instructions:
   - `curl https://install.meteor.com | /bin/sh` (if meteor isn't installed)
   - `meteor`
 
+Alternatively, you can run `npm start` from the root directory.
+
+Since this is in early development, I've included a reset script, `node reset.js`, that will blow away the database and site cache. It clears everything so consider yourself warned.
+
 # Enhancement Ideas
 
 ## Content Inventory Tool
