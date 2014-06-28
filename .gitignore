@@ -6,3 +6,4 @@ sitemapper-meteor/server/kadira.js
 sitemapper-crawler/cached_sites
 sitemapper-crawler/testCache
 npm-debug.log
+sitemapper-crawler/test.js
