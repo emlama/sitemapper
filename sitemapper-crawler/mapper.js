@@ -202,7 +202,8 @@ Mapper.prototype.newCrawler = function (_site) {
         sitescan_id: crawler.site._id,
         type: queueItem.stateData.contentType,
         code: queueItem.stateData.code,
-        size: queueItem.stateData.actualDataSize
+        size: queueItem.stateData.actualDataSize,
+        status: 'unlinked'
       }
     });
   });
@@ -219,7 +220,7 @@ Mapper.prototype.newCrawler = function (_site) {
 
   crawler.on("complete", function() {
     logger.info("Finished crawling %s", crawler.host);
-    // crawler.site.fileIndex = crawler.cache.datastore.index;
+    crawler.site.fileIndex = crawler.cache.datastore.index;
     crawler.site.status = 2; // She's done and we'll notify home next round of updates
   });
 

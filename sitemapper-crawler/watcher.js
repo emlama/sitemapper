@@ -39,7 +39,7 @@ Watcher.prototype.start = function () {
     // cares most about that object. I maintain it by pushing data into mapper using the message
     // function below.
     watcher.ddpclient.subscribe('unscannedSites', [], function () {});
-    logger.log('connected');
+    logger.info('Connected to meteor');
   });
 
   // Queue watcher
@@ -61,9 +61,15 @@ Watcher.prototype.subscribe = function () {
     callback: watcher.push
   }).withContext(watcher);
 
+  watcher.postal.subscribe({
+    channel: 'Sites',
+    topic: 'readyforlinking',
+    callback: watcher.requestPages
+  }).withContext(watcher);
+
   watcher.ddpclient.on('message', function (msg) {
     var message = JSON.parse(msg);
-    // logger.info(msg);
+    // logger.warn(msg);
 
     if (message.msg === 'added' && message.collection === 'sitescans') {
       // Munging to get in right format
@@ -78,7 +84,22 @@ Watcher.prototype.subscribe = function () {
           data: site
       });
     }
+
   });
+};
+
+Watcher.prototype.requestPages = function (sitescan_id) {
+  var watcher = this;
+
+  watcher.ddpclient.call('findUnlinkedPages', [sitescan_id],
+      function (err, result) {
+        console.log('called function, result: ' + result);
+          watcher.postal.publish({
+              channel: 'Sites',
+              topic: 'pagesforlinking',
+              data: result
+          });
+      });
 };
 
 Watcher.prototype.processPageQueue = function (self) {
@@ -98,13 +119,13 @@ Watcher.prototype.publishPage = function (page) {
   var watcher = this;
   var ddpclient = watcher.ddpclient;
 
-  ddpclient.call('pushPage', [page],
+  watcher.ddpclient.call('pushPage', [page],
     function (err, result) {
       if (err) {
         logger.error(err);
         return;
       }
-      logger.info('Successfully inserted: ' + result);
+      // logger.info('Successfully inserted: ' + result);
     },
     function () { // callback which fires when server has finished
       // console.log('updated');

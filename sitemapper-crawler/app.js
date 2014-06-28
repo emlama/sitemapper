@@ -5,10 +5,10 @@ var logger = require('tracer').colorConsole({
 });
 var Mapper = require('./mapper.js');
 var Watcher = require('./watcher.js');
-// var librarian = require('./librarian.js');
+var Librarian = require('./librarian.js');
 
 var watcher = new Watcher(postal);
 var crawl = new Mapper(postal);
-// var librarian = new Librarian(postal);
+var librarian = new Librarian(postal);
 
 logger.info('App started');
