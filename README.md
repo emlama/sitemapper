@@ -1,4 +1,4 @@
-This is a fun side project that aims to make doing information architecture work easier. Currently it will crawl a site and cache all of its resources to disk.
+Sitemapper aims to be a reverse CMS. It will index and cache an entire site and then let an Information Architect build a sitemap, define what templates are being used throughout the site, and model the content.
 
 The end goal is to allow IA's to arrange a current website into a comprehensive sitemap, perform content inventories and possibly map a websites data into a structured dataset.
 
@@ -32,14 +32,7 @@ Since this is in early development, I've included a reset script, `node reset.js
 ## Crawling
 
 - Add in admin controls for starting/stopping crawls
-- Add in ability to freeze/defrost a crawl
 - Add in controls for changing the limits on the fly
-
-## Misc
-
-- Add in users and authentication
-- Add in homepage
-- Create a ENV variables/switches for localhost/dev/production instances
 
 ## Dashboard
 
@@ -51,29 +44,3 @@ Since this is in early development, I've included a reset script, `node reset.js
 Export from the database
 
 `mongoexport --host localhost:3001 --db meteor --collection pagescans --fields type,url,title,size --csv --query '{"sitescan_id":"ZCTu9C9zCpcEqB4tD"}' --out ~/src/sitemapper/goang-pages-full.csv`
-
-# watcher.js ideas
-This file watches the `sitescans` collection in Meteor.
-
-`sitescans`
-- owner
-- status
--- complete
--- in progress
-- created_at
-- url
-- config
--- filters
--- strip query strings
--- TBD
-
-`pagecrawls`
-- url
-- owner
-- sitescan_id
-- meta_title
-- meta_description
-- content
-- created_at
-- content
-- consider pulling embed.ly content
