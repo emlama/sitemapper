@@ -1,4 +1,4 @@
-fvar _ = require('underscore');
+var _ = require('underscore');
 var Intern = require('./intern.js');
 var logger = require('tracer').colorConsole({
   format : "{{timestamp}} <{{title}}> [Librarian] {{message}}",
