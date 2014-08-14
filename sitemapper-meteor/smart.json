@@ -3,6 +3,7 @@
     "foundation5-sass": {
       "git": "https://github.com/matthewforr/meteor-foundation5-sass.git"
     },
-    "iron-router": {}
+    "iron-router": {},
+    "kadira": {}
   }
 }
